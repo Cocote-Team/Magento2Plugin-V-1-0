@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <cocote>
+            <general>
+                <map_name>name</map_name>
+                <map_mpn>sku</map_mpn>
+                <map_gtin></map_gtin>
+                <map_description>description</map_description>
+                <map_manufacturer>manufacturer</map_manufacturer>
+            </general>
+            <generate>
+                <path>feed</path>
+            </generate>
+        </cocote>
+    </default>
+</config>

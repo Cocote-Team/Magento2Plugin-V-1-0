@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="cocote_tab" translate="label" sortOrder="1001">
+            <label>Cocote</label>
+        </tab>
+        <section id="cocote" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="0" showInStore="0">
+            <class>cocote-section</class>
+            <label>Cocote feed configuration</label>
+            <tab>cocote_tab</tab>
+            <resource>Cocote_Feed::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Default values</label>
+
+                <field id="shop_id" type="text" translate="label,comment" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Shop ID</label>
+                    <comment>Get your shop ID from your Cocote merchant account</comment>
+                </field>
+                <field id="shop_key" type="text" translate="label,comment" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Private key</label>
+                    <comment>Get your private key from your Cocote merchant account</comment>
+                </field>
+                <field id="store" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Default store</label>
+                    <source_model>Cocote\Feed\Model\Config\Source\Stores</source_model>
+                </field>
+
+                <field id="map_name" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Map name attribute</label>
+                    <source_model>Cocote\Feed\Model\Config\Source\Attributes</source_model>
+                </field>
+
+                <field id="map_mpn" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Map MPN attribute</label>
+                    <source_model>Cocote\Feed\Model\Config\Source\Attributes</source_model>
+                </field>
+
+                <field id="map_gtin" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Map Gtin attribute</label>
+                    <source_model>Cocote\Feed\Model\Config\Source\Attributes</source_model>
+                </field>
+
+                <field id="map_description" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Map Description attribute</label>
+                    <source_model>Cocote\Feed\Model\Config\Source\Attributes</source_model>
+                </field>
+
+                <field id="map_manufacturer" translate="label" type="select" sortOrder="6" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Map Brand/Manufacturer attribute</label>
+                    <source_model>Cocote\Feed\Model\Config\Source\Attributes</source_model>
+                </field>
+            </group>
+            <group id="generate" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Feed generating</label>
+                <field id="path" translate="label,comment" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Generated file path</label>
+                    <comment>Directory where feed file will be placed. Counts from /pub directory. No slashes at the end or begining needed. If folder doesn't exist we'll try to create it</comment>
+                </field>
+                <field id="in_stock_only" translate="label,comment" type="checkbox" sortOrder="2" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Export only 'in stock' products</label>
+                    <frontend_model>Cocote\Feed\Block\System\Config\CheckboxInStock</frontend_model>
+                </field>
+                <field id="generate" translate="label comment" type="button" sortOrder="3" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <frontend_model>Cocote\Feed\Block\System\Config\Generatebutton</frontend_model>
+                    <label>Generate feed</label>
+                </field>
+                <field id="link" translate="label comment" type="button" sortOrder="4" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <frontend_model>Cocote\Feed\Block\System\Config\Linkfeed</frontend_model>
+                    <label>Link to feed</label>
+                    <comment>Your flow will be regenerated automatically on daily basis at 3 o'clock am</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

@@ -1,0 +1,11 @@
+<?php
+$shopId=addslashes($this->helper('Cocote\Feed\Helper\Data')->getConfigValue('cocote/general/shop_id'));
+?>
+<?php if($shopId): ?>
+<script type="text/javascript">
+    new CocoteTSA({
+        lang: "fr",
+        mSiteId: "<?php echo $shopId; ?>"
+    });
+</script>
+<?php endif; ?>

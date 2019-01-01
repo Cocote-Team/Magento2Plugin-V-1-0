@@ -1,0 +1,28 @@
+{
+  "name": "cocote/feedmini",
+  "description": "Magento 2 module creating xml feed file for cocote.com site",
+  "require": {
+      "magento/framework": "101.0.*"
+  },
+  "type": "magento2-module",
+  "version": "1.0.0",
+  "license": [
+    "OSL-3.0",
+    "AFL-3.0"
+  ],
+  "authors": [
+    {
+      "name": "Cocote",
+      "email": "olivier.decan@cocote.com",
+      "homepage": "https://fr.cocote.com"
+    }
+  ],
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Cocote\\Feedmini\\": ""
+    }
+  }
+}
