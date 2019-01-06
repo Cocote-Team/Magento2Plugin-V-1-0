@@ -32,9 +32,14 @@ class OrderObserver implements ObserverInterface
             throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
         });
         try {
-            $invoice=$observer->getEvent()->getInvoice();
-            $orderId =$invoice->getOrderId();
-            $order = $this->orderRepository->get($orderId);
+            $order=$observer->getEvent()->getOrder();
+            if (!($order instanceof \Magento\Framework\Model\AbstractModel)) {
+                $this->logger->log(100, 'error');
+                return;
+            }
+            if ($order->getState() != 'complete') {
+                return;
+            }
 
             $data=[
                 'shopId' => $this->scopeConfig->getValue('cocote/general/shop_id', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
