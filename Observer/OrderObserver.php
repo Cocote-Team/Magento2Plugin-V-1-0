@@ -37,7 +37,9 @@ class OrderObserver implements ObserverInterface
                 $this->logger->log(100, 'error');
                 return;
             }
-            if ($order->getState() != 'complete') {
+            $oldState=$order->getOrigData('state');
+            $state=$order->getState();
+            if ($state!='complete' && $oldState!='complete') {
                 return;
             }
 
@@ -46,6 +48,7 @@ class OrderObserver implements ObserverInterface
                 'privateKey' => $this->scopeConfig->getValue('cocote/general/shop_key', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
                 'email' => $order->getCustomerEmail(),
                 'orderId' => $order->getIncrementId(),
+                'orderState' => $state,
                 'orderPrice' => $order->getGrandTotal(),
                 'priceCurrency' => 'EUR',
             ];
