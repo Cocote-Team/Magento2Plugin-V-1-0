@@ -43,6 +43,11 @@ class OrderObserver implements ObserverInterface
                 return;
             }
 
+            $mappedStatuses=array('complete'=>'completed');
+            if(isset($mappedStatuses[$state])) {
+                $state=$mappedStatuses[$state];
+            }
+
             $data=[
                 'shopId' => $this->scopeConfig->getValue('cocote/general/shop_id', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
                 'privateKey' => $this->scopeConfig->getValue('cocote/general/shop_key', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
