@@ -31,7 +31,8 @@ class Generate extends Command
         try {
             $this->helper->generateFeed();
         } catch (\Exception $e) {
-            echo $e->getMessage();
+            $output->writeln("<error>{$e->getMessage()}</error>");
+            return Cli::RETURN_FAILURE;
         }
     }
 }
