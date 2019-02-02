@@ -16,6 +16,7 @@ class Data extends AbstractHelper
     protected $output;
     protected $scopeConfig;
     protected $productCollectionFactory;
+    protected $categoryFactory;
     protected $productVisibility;
     protected $galleryReadHandler;
     protected $storeManager;
@@ -25,11 +26,13 @@ class Data extends AbstractHelper
     protected $cacheTypeList;
     protected $resource;
     protected $timeZone;
+    protected $categoriesList=[];
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface,
         \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory,
+        \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryFactory,
         \Magento\Catalog\Model\Product\Visibility $productVisibility,
         \Magento\Framework\App\State $appState,
         \Magento\CatalogInventory\Helper\Stock $stockHelper,
@@ -45,6 +48,7 @@ class Data extends AbstractHelper
         $this->configInterface = $configInterface;
         $this->productVisibility = $productVisibility;
         $this->productCollectionFactory=$productCollectionFactory;
+        $this->categoryFactory=$categoryFactory;
         $this->galleryReadHandler = $galleryReadHandler;
         $this->storeManager=$storeManager;
         $this->priceHelper=$priceHelper;
@@ -130,6 +134,7 @@ class Data extends AbstractHelper
         foreach ($this->mapping as $attribute) {
             $collection->addAttributeToSelect($attribute);
         }
+        $collection->addCategoryIds();
         return $collection;
     }
 
@@ -203,6 +208,11 @@ class Data extends AbstractHelper
             $currentprod->appendChild($domtree->createElement('identifier', $product->getId()));
             $currentprod->appendChild($domtree->createElement('link', $url));
             $currentprod->appendChild($domtree->createElement('keywords', $product->getData('meta_keyword')));
+
+            if($catName=$this->getBestCategory($product->getCategoryIds())) {
+                $currentprod->appendChild($domtree->createElement('category', $catName));
+            }
+
 
             if($product->getTypeId()=='bundle') {
                 $rawPrice=$product->getPriceInfo()->getPrice('final_price')->getMinimalPrice()->getValue();
@@ -305,5 +315,60 @@ class Data extends AbstractHelper
     {
         return sprintf('%s_%s', $this->getTable('catalog_product_flat'), $storeId);
     }
+
+    public function getBestCategory($ids) {
+        $ret='';
+        if(!sizeof($ids)) {
+            return $ret;
+        }
+        $level=0;
+        foreach($ids as $id) {
+            $category=$this->getCategory($id);
+            if($category['level']>$level) {
+                $bestCategory=$category;
+                $level=$category['level'];
+            }
+        }
+        $path=explode('/',$bestCategory['path']);
+        for($i=2;$i<sizeof($path)-1;$i++) {
+            $cat=$this->getCategory($path[$i]);
+            $ret.=$this->formatCategoryName($cat['name']).'>';
+        }
+        $ret.=$this->formatCategoryName($bestCategory['name']);
+        return $ret;
+    }
+
+    public function formatCategoryName($name) {
+        $name=str_replace(' ','-',$name);
+        $regexp = '/&([a-z]{1,2})(acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron);/i';
+        $name=html_entity_decode(preg_replace($regexp, '$1', htmlentities($name)));
+        return $name;
+    }
+
+    public function getCategory($id) {
+        if(!sizeof($this->categoriesList)) {
+
+            $storeCode=$this->getConfigValue('cocote/general/store');
+            if (!$storeCode) {
+                $storeCode='default';
+            }
+            $this->storeManager->setCurrentStore($storeCode);
+
+            $categories=[];
+
+            $allCategories= $this->categoryFactory->create()
+                ->addAttributeToSelect('*')
+                ->setStore($this->storeManager->getStore());
+
+            foreach($allCategories as $cat) {
+                $categories[$cat->getId()]['name'] = $cat->getName();
+                $categories[$cat->getId()]['level'] = $cat->getLevel();
+                $categories[$cat->getId()]['path'] = $cat->getPath();
+            }
+            $this->categoriesList=$categories;
+        }
+        return $this->categoriesList[$id];
+    }
+
 
 }

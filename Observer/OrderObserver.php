@@ -48,6 +48,12 @@ class OrderObserver implements ObserverInterface
                 $state=$mappedStatuses[$state];
             }
 
+            $skus=[];
+            foreach ($order->getAllVisibleItems() as $item) {
+                $skus[]=$item->getSku();
+            }
+            $skus=implode(',',$skus);
+
             $data=[
                 'shopId' => $this->scopeConfig->getValue('cocote/general/shop_id', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
                 'privateKey' => $this->scopeConfig->getValue('cocote/general/shop_key', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
@@ -56,6 +62,7 @@ class OrderObserver implements ObserverInterface
                 'orderState' => $state,
                 'orderPrice' => $order->getGrandTotal(),
                 'priceCurrency' => 'EUR',
+                'skus' => $skus,
             ];
             $this->logger->log(100, print_r($data, true));
 
