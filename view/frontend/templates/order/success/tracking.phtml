@@ -1,0 +1,16 @@
+<?php
+$shopId=addslashes($this->helper('Cocote\Feed\Helper\Data')->getConfigValue('cocote/general/shop_id'));
+?>
+<script src="https://js.cocote.com/script-confirm-fr.min.js"></script>
+  <script type="text/javascript">
+    new CocoteTSC({
+      lang: "fr",
+      mSiteId: "<?php echo $shopId; ?>",
+      amount: <?php echo $block->getOrder()->getGrandTotal(); ?>,
+      orderId: <?php echo $block->getOrder()->getIncrementId(); ?>
+    });
+    
+  </script>
+      
+  
+  

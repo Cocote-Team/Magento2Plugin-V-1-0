@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<body>
+    <referenceContainer name="before.body.end">
+        <block class="Cocote\Feed\Block\Success"
+               name="cocote_tracking"
+               template="Cocote_Feed::order/success/tracking.phtml"
+               after="cocote">
+        </block>
+    </referenceContainer>
+</body>
