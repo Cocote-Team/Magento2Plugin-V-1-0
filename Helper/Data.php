@@ -27,6 +27,7 @@ class Data extends AbstractHelper
     protected $resource;
     protected $timeZone;
     protected $categoriesList=[];
+    protected $moduleList;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -42,6 +43,7 @@ class Data extends AbstractHelper
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
         \Magento\Framework\App\ResourceConnection $resource,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone,
+        \Magento\Framework\Module\ModuleList $moduleList,
         Context $context
     ) {
         $this->scopeConfig = $scopeConfig;
@@ -56,6 +58,7 @@ class Data extends AbstractHelper
         $this->timeZone=$timezone;
         $this->cacheTypeList = $cacheTypeList;
         $this->resource = $resource;
+        $this->moduleList=$moduleList;
 
         parent::__construct($context);
     }
@@ -176,6 +179,9 @@ class Data extends AbstractHelper
 
         $generated = $domtree->createElement('generated',$this->timeZone->date()->format('Y-m-d H:i:s'));
         $generated->setAttribute('cms', 'magento');
+        $version=$this->getModuleVersion();
+        $generated->setAttribute('plugin_version',$version);
+
         $xmlRoot->appendChild($generated);
 
         $offers = $domtree->createElement("offers");
@@ -368,6 +374,10 @@ class Data extends AbstractHelper
             $this->categoriesList=$categories;
         }
         return $this->categoriesList[$id];
+    }
+
+    public function getModuleVersion() {
+        return $this->moduleList->getOne('Cocote_Feed')['setup_version'];
     }
 
 
