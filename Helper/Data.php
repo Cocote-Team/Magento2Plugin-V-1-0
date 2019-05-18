@@ -125,6 +125,9 @@ class Data extends AbstractHelper
         $collection->setVisibility($this->productVisibility->getVisibleInSiteIds());
 
         $collection->addAttributeToSelect('price');
+        $collection->addAttributeToSelect('special_price');
+        $collection->addAttributeToSelect('special_price_from');
+        $collection->addAttributeToSelect('special_price_to');
         $collection->addAttributeToSelect('image');
         $collection->addAttributeToSelect('meta_keyword');
         $collection->addFieldToFilter('status', ['eq' => \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED]);
