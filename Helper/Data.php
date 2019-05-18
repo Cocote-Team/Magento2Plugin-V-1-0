@@ -228,7 +228,11 @@ class Data extends AbstractHelper
                 $price=$this->priceHelper->currency($rawPrice, true, false);
             }
             else {
+                $discountedPrice = $product->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
                 $price=$this->priceHelper->currency($product->getFinalPrice(), true, false);
+                if($discountedPrice && $discountedPrice<$product->getFinalPrice()) {
+                    $price=$this->priceHelper->currency($discountedPrice, true, false);
+                }
             }
             $currentprod->appendChild($domtree->createElement('price', $price));
 
