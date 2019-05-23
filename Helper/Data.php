@@ -28,6 +28,7 @@ class Data extends AbstractHelper
     protected $timeZone;
     protected $categoriesList=[];
     protected $moduleList;
+    protected $stockState;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -36,6 +37,7 @@ class Data extends AbstractHelper
         \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryFactory,
         \Magento\Catalog\Model\Product\Visibility $productVisibility,
         \Magento\Framework\App\State $appState,
+        \Magento\CatalogInventory\Api\StockStateInterface $stockState,
         \Magento\CatalogInventory\Helper\Stock $stockHelper,
         GalleryReadHandler $galleryReadHandler,
         StoreManagerInterface $storeManager,
@@ -44,6 +46,7 @@ class Data extends AbstractHelper
         \Magento\Framework\App\ResourceConnection $resource,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone,
         \Magento\Framework\Module\ModuleList $moduleList,
+        
         Context $context
     ) {
         $this->scopeConfig = $scopeConfig;
@@ -55,6 +58,7 @@ class Data extends AbstractHelper
         $this->storeManager=$storeManager;
         $this->priceHelper=$priceHelper;
         $this->stockHelper=$stockHelper;
+        $this->stockState=$stockState;
         $this->timeZone=$timezone;
         $this->cacheTypeList = $cacheTypeList;
         $this->resource = $resource;
@@ -146,8 +150,6 @@ class Data extends AbstractHelper
 
     public function generateFeed()
     {
-        $validate=[];
-
         $filePath=$this->getFilePath();
         $store = $this->storeManager->getStore();
 
@@ -222,17 +224,22 @@ class Data extends AbstractHelper
                 $currentprod->appendChild($domtree->createElement('category', $catName));
             }
 
-
+              
             if($product->getTypeId()=='bundle') {
                 $rawPrice=$product->getPriceInfo()->getPrice('final_price')->getMinimalPrice()->getValue();
                 $price=$this->priceHelper->currency($rawPrice, true, false);
-            }
-            else {
+            } elseif($product->getTypeId()=='configurable') {
+                $priceOptions = $this->getConfigurableOptions($product,$domtree,$store);
+                $currentprod->appendChild($priceOptions);
+            
+            } else {        //simple
                 $discountedPrice = $product->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
                 $price=$this->priceHelper->currency($product->getFinalPrice(), true, false);
                 if($discountedPrice && $discountedPrice<$product->getFinalPrice()) {
                     $price=$this->priceHelper->currency($discountedPrice, true, false);
                 }
+                $qty=$this->stockState->getStockQty($product->getId(), $product->getStore()->getWebsiteId());
+                $currentprod->appendChild($domtree->createElement('stock', (int)$qty));
             }
             $currentprod->appendChild($domtree->createElement('price', $price));
 
@@ -386,6 +393,51 @@ class Data extends AbstractHelper
     public function getModuleVersion() {
         return $this->moduleList->getOne('Cocote_Feed')['setup_version'];
     }
+    
+    
+    public function getConfigurableOptions($product,$domtree,$store) {
+        //$price = Mage::helper('core')->formatPrice($product->getPrice(), false);
+        $price = $product->getFinalPrice();
+        $attributes = $product->getTypeInstance(true)->getConfigurableAttributesAsArray($product);
+        
+        $optionsList=$domtree->createElement('options_list');
+        $optionsList->appendChild($domtree->createElement('base_price_vat',$price));
+
+        $attributesMapping=[];
+
+        foreach ($attributes as $attribute) {
+            $attributesMapping[$attribute['attribute_code']]=$attribute['attribute_id'];
+            $optionsGroup=$domtree->createElement('options_group');
+            $optionsGroup->setAttribute('name', $attribute['store_label']);
+            foreach($attribute['values'] as $value) {
+                $optionChoice=$domtree->createElement('option_choice',$value['store_label']);
+                $optionChoice->setAttribute('id', $attribute['attribute_id']."|".$value['value_index']);
+//                $optionChoice->setAttribute('addprice', $value['pricing_value']);
+//                $optionChoice->setAttribute('is_percent', $value['is_percent']);
+                $optionsGroup->appendChild($optionChoice);
+            }
+            $optionsList->appendChild($optionsGroup);
+        }
+
+
+        $childProducts = $product->getTypeInstance(true)->getUsedProducts($product);
+        foreach($childProducts as $simpleProd) {
+            $idArray=[];
+            foreach($attributesMapping as $code=>$id) {
+                $idArray[]=$id.'|'.$simpleProd->getData($code);
+            }
+            $qty=$this->stockState->getStockQty($simpleProd->getId(), $simpleProd->getStore()->getWebsiteId());
+            $stockDOM=$domtree->createElement('stock',$qty);
+            $stockDOM->setAttribute('id',implode('-',$idArray));
+            if($simpleProd->getImage()) {
+                $stockDOM->setAttribute('image',$store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product' .$simpleProd->getImage());
+            }
+                $stockDOM->setAttribute('price', $simpleProd->getFinalPrice());
+            $optionsList->appendChild($stockDOM);
+        }
+        
+        return $optionsList;
+    }    
 
 
 }
