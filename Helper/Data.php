@@ -29,6 +29,7 @@ class Data extends AbstractHelper
     protected $categoriesList=[];
     protected $moduleList;
     protected $stockState;
+    protected $stockRegistry;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -38,6 +39,7 @@ class Data extends AbstractHelper
         \Magento\Catalog\Model\Product\Visibility $productVisibility,
         \Magento\Framework\App\State $appState,
         \Magento\CatalogInventory\Api\StockStateInterface $stockState,
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
         \Magento\CatalogInventory\Helper\Stock $stockHelper,
         GalleryReadHandler $galleryReadHandler,
         StoreManagerInterface $storeManager,
@@ -59,6 +61,7 @@ class Data extends AbstractHelper
         $this->priceHelper=$priceHelper;
         $this->stockHelper=$stockHelper;
         $this->stockState=$stockState;
+        $this->stockRegistry=$stockRegistry;
         $this->timeZone=$timezone;
         $this->cacheTypeList = $cacheTypeList;
         $this->resource = $resource;
@@ -229,9 +232,9 @@ class Data extends AbstractHelper
                 $rawPrice=$product->getPriceInfo()->getPrice('final_price')->getMinimalPrice()->getValue();
                 $price=$this->priceHelper->currency($rawPrice, true, false);
             } elseif($product->getTypeId()=='configurable') {
-                $priceOptions = $this->getConfigurableOptions($product,$domtree,$store);
-                $currentprod->appendChild($priceOptions);
-            
+                $configurableOptions = $this->getConfigurableOptions($product,$domtree,$store);
+                $currentprod->appendChild($configurableOptions);
+                $price=$product->getFinalPrice();
             } else {        //simple
                 $discountedPrice = $product->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
                 $price=$this->priceHelper->currency($product->getFinalPrice(), true, false);
@@ -240,6 +243,7 @@ class Data extends AbstractHelper
                 }
                 $qty=$this->stockState->getStockQty($product->getId(), $product->getStore()->getWebsiteId());
                 $currentprod->appendChild($domtree->createElement('stock', (int)$qty));
+                $currentprod->appendChild($domtree->createElement('threshold_stock', $this->stockRegistry->getStockItem($product->getId())->getMinQty()));
             }
             $currentprod->appendChild($domtree->createElement('price', $price));
 
@@ -396,46 +400,49 @@ class Data extends AbstractHelper
     
     
     public function getConfigurableOptions($product,$domtree,$store) {
-        //$price = Mage::helper('core')->formatPrice($product->getPrice(), false);
-        $price = $product->getFinalPrice();
         $attributes = $product->getTypeInstance(true)->getConfigurableAttributesAsArray($product);
         
-        $optionsList=$domtree->createElement('options_list');
-        $optionsList->appendChild($domtree->createElement('base_price_vat',$price));
+        $optionsList=$domtree->createElement('variations');
 
         $attributesMapping=[];
 
         foreach ($attributes as $attribute) {
-            $attributesMapping[$attribute['attribute_code']]=$attribute['attribute_id'];
-            $optionsGroup=$domtree->createElement('options_group');
-            $optionsGroup->setAttribute('name', $attribute['store_label']);
-            foreach($attribute['values'] as $value) {
-                $optionChoice=$domtree->createElement('option_choice',$value['store_label']);
-                $optionChoice->setAttribute('id', $attribute['attribute_id']."|".$value['value_index']);
-//                $optionChoice->setAttribute('addprice', $value['pricing_value']);
-//                $optionChoice->setAttribute('is_percent', $value['is_percent']);
-                $optionsGroup->appendChild($optionChoice);
-            }
-            $optionsList->appendChild($optionsGroup);
+            $attributesMapping[$attribute['attribute_code']]=$attribute['store_label'];
         }
-
 
         $childProducts = $product->getTypeInstance(true)->getUsedProducts($product);
         foreach($childProducts as $simpleProd) {
+
             $idArray=[];
             foreach($attributesMapping as $code=>$id) {
-                $idArray[]=$id.'|'.$simpleProd->getData($code);
+                $idArray[]=$id.' - '.$simpleProd->getResource()->getAttribute($code)->getFrontend()->getValue($simpleProd);
             }
             $qty=$this->stockState->getStockQty($simpleProd->getId(), $simpleProd->getStore()->getWebsiteId());
-            $stockDOM=$domtree->createElement('stock',$qty);
-            $stockDOM->setAttribute('id',implode('-',$idArray));
-            if($simpleProd->getImage()) {
-                $stockDOM->setAttribute('image',$store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product' .$simpleProd->getImage());
+            $minQty=$this->stockRegistry->getStockItem($product->getId())->getMinQty();
+
+            $variation=$domtree->createElement('variation');
+
+            $variation->appendChild($domtree->createElement('variation_id',$simpleProd->getId()));
+            $variation->appendChild($domtree->createElement('variation_name',$simpleProd->getName()));
+            $variation->appendChild($domtree->createElement('variation_reference',$simpleProd->getSku()));
+            $variation->appendChild($domtree->createElement('variation_stock',$qty));
+            $variation->appendChild($domtree->createElement('variation_threshold_stock',$minQty));
+            $variation->appendChild($domtree->createElement('variation_price',$simpleProd->getFinalPrice()));
+            $variation->appendChild($domtree->createElement('variation_options',implode(',',$idArray)));
+
+            $descTag=$domtree->createElement('variation_description');
+            $description=$simpleProd->getResource()->getAttributeRawValue($simpleProd->getId(),'description',$this->storeManager->getStore()->getId());
+            if(!is_array($description)) {
+                $descTag->appendChild($domtree->createCDATASection($description));
             }
-                $stockDOM->setAttribute('price', $simpleProd->getFinalPrice());
-            $optionsList->appendChild($stockDOM);
+            $variation->appendChild($descTag);
+
+            if($simpleProd->getImage()) {
+                $image=$store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product' .$simpleProd->getImage();
+                $variation->appendChild($domtree->createElement('variation_image',$image));
+            }
+            $optionsList->appendChild($variation);
         }
-        
         return $optionsList;
     }    
 
