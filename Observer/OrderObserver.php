@@ -39,7 +39,11 @@ class OrderObserver implements ObserverInterface
             }
             $oldState=$order->getOrigData('state');
             $state=$order->getState();
-            if ($state!='complete' && $oldState!='complete') {
+
+            if ($state==$oldState) {
+                return;
+            }
+            if(!($state=='complete' || $oldState=='complete' || $state=='processing')) {
                 return;
             }
 
