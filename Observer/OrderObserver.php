@@ -11,12 +11,14 @@ class OrderObserver implements ObserverInterface
     protected $dir;
     protected $scopeConfig;
     protected $orderRepository;
-    
+    protected $helper;
+
 
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\App\Filesystem\DirectoryList $dir,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Cocote\Feed\Helper\Data $helper,
         OrderRepositoryInterface $OrderRepositoryInterface
     ) {
         $this->logger = $logger;
@@ -24,6 +26,8 @@ class OrderObserver implements ObserverInterface
         $this->logger->pushHandler(new \Monolog\Handler\StreamHandler($this->dir->getRoot().'/var/log/cocote.log'));
         $this->scopeConfig = $scopeConfig;
         $this->orderRepository = $OrderRepositoryInterface;
+        $this->helper=$helper;
+
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)

@@ -3,4 +3,10 @@
     <event name="sales_order_save_after">
         <observer name="cocote_after_order" instance="Cocote\Feed\Observer\OrderObserver" />
     </event>
+    <event name="cataloginventory_stock_item_save_after">
+        <observer name="cocote_after_stockitem" instance="Cocote\Feed\Observer\StockitemObserver" />
+    </event>
+    <event name="catalog_product_save_after">
+        <observer name="cocote_after_product" instance="Cocote\Feed\Observer\ProductObserver" />
+    </event>
 </config>

@@ -30,6 +30,11 @@ class Data extends AbstractHelper
     protected $moduleList;
     protected $stockState;
     protected $stockRegistry;
+    protected $cocoteProductFactory;
+    protected $cocoteDataProductFactory;
+    protected $cocoteProductRepository;
+    protected $searchCriteriaBuilder;
+
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -48,7 +53,10 @@ class Data extends AbstractHelper
         \Magento\Framework\App\ResourceConnection $resource,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone,
         \Magento\Framework\Module\ModuleList $moduleList,
-        
+        \Cocote\Feed\Model\Data\ProductFactory $cocoteDataProductFactory,
+        \Cocote\Feed\Model\ProductFactory $cocoteProductFactory,
+        \Cocote\Feed\Api\ProductRepositoryInterface $cocoteProductRepository,
+
         Context $context
     ) {
         $this->scopeConfig = $scopeConfig;
@@ -66,6 +74,9 @@ class Data extends AbstractHelper
         $this->cacheTypeList = $cacheTypeList;
         $this->resource = $resource;
         $this->moduleList=$moduleList;
+        $this->cocoteProductFactory=$cocoteProductFactory;
+        $this->cocoteDataProductFactory=$cocoteDataProductFactory;
+        $this->cocoteProductRepository=$cocoteProductRepository;
 
         parent::__construct($context);
     }
@@ -444,7 +455,21 @@ class Data extends AbstractHelper
             $optionsList->appendChild($variation);
         }
         return $optionsList;
-    }    
+    }
 
+    public function updatePriceStock() {
+        $collection = $this->cocoteProductFactory->create()->getCollection();
+        foreach($collection as $item){
+            $item->delete();
+        }
+
+        //send
+    }
+
+    public function saveProductToUpdate($productId) {
+        $productUpdate = $this->cocoteDataProductFactory->create();
+        $productUpdate->setData('product_id',$productId);
+        $this->cocoteProductRepository->save($productUpdate);
+    }
 
 }
