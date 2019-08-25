@@ -472,4 +472,30 @@ class Data extends AbstractHelper
         $this->cocoteProductRepository->save($productUpdate);
     }
 
+    public function getMagentoVersion() {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
+        $version = $productMetadata->getVersion();
+        return $version;
+    }
+
+    public function saveToken($token,$orderId) {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $resource = $objectManager->get('Magento\Framework\App\ResourceConnection');
+        $connection = $resource->getConnection();
+
+        $query="insert into cocote_token (order_id,token) values ('".$orderId."','".$token."')";
+        $connection->query($query);
+        setcookie('Cocote-token', null, -1, '/');
+    }
+
+    public function getToken($orderId) {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $resource = $objectManager->get('Magento\Framework\App\ResourceConnection');
+        $connection = $resource->getConnection();
+
+        $query = 'SELECT token FROM cocote_token WHERE order_id = ' . (int)$orderId . ' LIMIT 1';
+        $token = $connection->fetchOne($query);
+        return $token;
+    }
 }

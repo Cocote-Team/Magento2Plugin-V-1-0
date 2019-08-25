@@ -8,5 +8,31 @@ $shopId=addslashes($this->helper('Cocote\Feed\Helper\Data')->getConfigValue('coc
         lang: "fr",
         mSiteId: "<?php echo $shopId; ?>"
     });
+
+    function writeCookie(cookieName, cookieValue, expires, domain,
+                         path, secureFlag) {
+        if (cookieName) {
+            var cookieDetails = cookieName + "=" +
+                escape(cookieValue);
+
+            cookieDetails += (expires ? "; expires=" +
+                expires.toGMTString(): '');
+
+            cookieDetails += (domain ? "; domain=" + domain: '');
+            cookieDetails += (path ? "; path=" + path: '');
+            cookieDetails += (secureFlag ? "; secure": '');
+            document.cookie = cookieDetails;
+        }
+    }
+
+    var url_string = window.location.href;
+    var url = new URL(url_string);
+    var token = url.searchParams.get("cocotecashbacktoken");
+    if (token) {
+        var expiredDate = new Date();
+        expiredDate.setHours(+24);
+        writeCookie('Cocote-token',token,expiredDate,'','/','');
+    }
+
 </script>
 <?php endif; ?>

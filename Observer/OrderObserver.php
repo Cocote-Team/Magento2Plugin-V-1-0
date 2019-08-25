@@ -41,6 +41,15 @@ class OrderObserver implements ObserverInterface
                 $this->logger->log(100, 'error');
                 return;
             }
+
+            if(isset($_COOKIE["Cocote-token"])) {
+                $token=htmlspecialchars($_COOKIE["Cocote-token"]);
+                $this->helper->saveToken($token,$order->getId());
+            }
+            if(!$token) {
+                $token=$this->helper->getToken($order->getId());
+            }
+
             $oldState=$order->getOrigData('state');
             $state=$order->getState();
 
@@ -51,27 +60,40 @@ class OrderObserver implements ObserverInterface
                 return;
             }
 
-            $mappedStatuses=array('complete'=>'completed');
+            $mappedStatuses=array('complete'=>'shipped',
+                'processing'=>'paid',
+                'closed' =>'refunded'
+
+            );
+
             if(isset($mappedStatuses[$state])) {
                 $state=$mappedStatuses[$state];
             }
 
-            $skus=[];
-            foreach ($order->getAllVisibleItems() as $item) {
-                $skus[]=$item->getSku();
+            $refundedAmount=0;
+            if($order->getData('base_total_refunded')) {
+                $refundedAmount=$order->getData('base_total_refunded');
             }
-            $skus=implode(',',$skus);
+
+            $items=array();
+            foreach ($order->getAllVisibleItems() as $item) {
+                $items[]=['id'=>$item->getSku(),'qty'=>1];
+            }
 
             $data=[
-                'shopId' => $this->scopeConfig->getValue('cocote/general/shop_id', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-                'privateKey' => $this->scopeConfig->getValue('cocote/general/shop_key', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-                'email' => $order->getCustomerEmail(),
                 'orderId' => $order->getIncrementId(),
+                'orderDate' => $order->getCreatedAt(),
                 'orderState' => $state,
-                'orderPrice' => $order->getGrandTotal(),
+                'refundedAmount' => $refundedAmount,
+                'orderAmount' => $order->getGrandTotal(),
                 'priceCurrency' => 'EUR',
-                'skus' => $skus,
+                'customerToken' =>$token,
+                'trackingUrl'=>'',
+                'products'=>$items, //id quantity array
             ];
+
+            $dataJson = json_encode($data);
+
             $this->logger->log(100, print_r($data, true));
 
             if (!function_exists('curl_version')) {
@@ -79,10 +101,20 @@ class OrderObserver implements ObserverInterface
             }
 
             $curl = curl_init();
+
+            curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+                'X-Shop-Id: '.$this->scopeConfig->getValue('cocote/general/shop_id', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
+                'X-Secret-Key: '.$this->scopeConfig->getValue('cocote/general/shop_key', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
+                'X-Site-Version: Magento '.$this->helper->getMagentoVersion(),
+                'X-Plugin-Version:'.$this->helper->getModuleVersion(),
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($dataJson),
+            ));
+
             curl_setopt($curl, CURLOPT_POST, 1);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $dataJson);
             curl_setopt($curl, CURLOPT_TIMEOUT_MS, 1000);
-            curl_setopt($curl, CURLOPT_URL, "https://fr.cocote.com/api/cashback/request");
+            curl_setopt($curl, CURLOPT_URL, "https://fr.cocote.com/api/shops/v2/notify-order");
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
             $result = curl_exec($curl);
             curl_close($curl);
