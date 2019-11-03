@@ -4,7 +4,8 @@
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="generateFeed" xsi:type="object">Cocote\Feed\Console\Generate</item>
-                <item name="generateFeed" xsi:type="object">Cocote\Feed\Console\Update</item>
+                <item name="updatePrices" xsi:type="object">Cocote\Feed\Console\Update</item>
+                <item name="createOrder" xsi:type="object">Cocote\Feed\Console\Ordercreate</item>
             </argument>
         </arguments>
     </type>
