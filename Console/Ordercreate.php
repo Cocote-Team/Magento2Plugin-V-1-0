@@ -31,10 +31,10 @@ class Ordercreate extends Command
     {
         $this->appState->setAreaCode('frontend');
         try {
-            $this->helper->createOrder();
+            $this->helper->testOrderCreate();
         } catch (\Exception $e) {
             $output->writeln("<error>{$e->getMessage()}</error>");
-            return Cli::RETURN_FAILURE;
+            return \Cli::RETURN_FAILURE;
         }
     }
 }

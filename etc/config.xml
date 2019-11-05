@@ -14,5 +14,28 @@
                 <path>feed</path>
             </generate>
         </cocote>
+        <carriers>
+            <cocote>
+                <active>1</active>
+                <sallowspecific>0</sallowspecific>
+                <model>Cocote\Feed\Model\Carrier\Shipping</model>
+                <name>Cocote Shipping Method</name>
+                <price>10.00</price>
+                <title>Cocote Shipping Method</title>
+                <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
+                <handling_type>F</handling_type>
+            </cocote>
+        </carriers>
+        <payment>
+            <cocote>
+                <active>0</active>
+                <title>Cocote</title>
+                <order_status>pending</order_status>
+                <instructions>Instruction.</instructions>
+                <payment_action>true</payment_action>
+                <model>Cocote\Feed\Model\Payment\Cocote</model>
+                <group>offline</group>
+            </cocote>
+        </payment>
     </default>
 </config>
