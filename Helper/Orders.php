@@ -45,9 +45,8 @@ class Orders extends AbstractHelper
             $quote->setData($data['customer_data']);
             $quote->setCocote(1);
 
-            foreach ($data['products'] as $productId => $qty) {
-                $product = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($productId); // get product by product id
-                $quote->addProduct($product, $qty); // add products to quote
+            foreach($data['products'] as $request) {
+                $quote->addProduct($request['prod'], $request['params']);
             }
 
             $quote->getBillingAddress()->addData($data['billing_address']);
@@ -71,13 +70,41 @@ class Orders extends AbstractHelper
         } catch (Exception $e) {
             echo $e->getMessage();
         }
-
     }
 
     public function testOrderCreate() {
         $data=[];
 
-        $productIds = array(1 => 1);
+        $simpleProductId=2;
+        $configurableId=3;
+
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $simpleProduct = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($simpleProductId);
+        $configurableProduct = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($configurableId);
+
+        $productAttributeOptions = $configurableProduct->getTypeInstance(true)->getConfigurableAttributesAsArray($configurableProduct);
+
+        $options = array();
+
+        foreach ($productAttributeOptions as $productAttribute) {
+            $allValues = array_column($productAttribute['values'], 'value_index');
+            $currentProductValue = $simpleProduct->getData($productAttribute['attribute_code']);
+            if (in_array($currentProductValue, $allValues)) {
+                $options[$productAttribute['attribute_id']] = $currentProductValue;
+            }
+        }
+        $params = array(
+            'product' => $configurableProduct->getId(),
+            'qty' => 1,
+            'super_attribute' => $options,
+        );
+
+        $obj = new \Magento\Framework\DataObject();
+        $obj->setData($params);
+
+        $productIds = [];
+        $productIds[]=['prod'=>$configurableProduct,'params'=>$obj];
+
         $data['products']=$productIds;
 
         $customerData=[
@@ -119,6 +146,5 @@ class Orders extends AbstractHelper
         $data['shipping_address'] =$shippingAddress;
         $this->createOrder($data);
     }
-
 
 }
