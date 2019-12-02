@@ -11,6 +11,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
      * @var string
      */
     protected $_code = 'cocote';
+    protected $specialPrice = 10;
 
     /**
      * @var \Magento\Shipping\Model\Rate\ResultFactory
@@ -78,6 +79,11 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
             return false;
         }
 
+        if($quote->getCocoteShippingPrice()) {
+            $this->specialPrice=$quote->getCocoteShippingPrice();
+        }
+
+
 //        if (!$this->getConfigFlag('active')) {
 //            return false;
 //        }
@@ -94,7 +100,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrier implement
         $method->setMethod($this->_code);
         $method->setMethodTitle($this->getConfigData('name'));
 
-        $method->setPrice(5);
+        $method->setPrice($this->specialPrice);
         $method->setCost(0);
 
         $result->append($method);

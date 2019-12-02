@@ -34,7 +34,7 @@ class Ordercreate extends Command
             $this->helper->testOrderCreate();
         } catch (\Exception $e) {
             $output->writeln("<error>{$e->getMessage()}</error>");
-            return \Cli::RETURN_FAILURE;
+            //return \Cli::RETURN_FAILURE;
         }
     }
 }

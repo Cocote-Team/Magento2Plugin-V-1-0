@@ -87,15 +87,33 @@ class Orders extends AbstractHelper
 
         $store = $this->storeManager->getStore();
 
+        $shippingPrice=$data['shipping_cost'];
+
+
         try {
             $quote = $objectManager->get('\Magento\Quote\Model\QuoteFactory')->create();
             $quote->setStore($store);
             $quote->setCurrency();
             $quote->setData($data['customer_data']);
+            $quote->setCocoteShippingPrice($shippingPrice);
             $quote->setCocote(1);
 
             foreach ($data['products'] as $request) {
-                $quote->addProduct($request['prod'], $request['params']);
+                $item=$quote->addProduct($request['prod'], $request['params']);
+                $quote->save();
+
+                $customPrice=$request['params']['custom_price'];
+                if($item->getParentItemId()) {
+                    $parentItem=$item->getParentItem();
+                    $parentItem->setIsSuperMode(1);
+                    $parentItem->setCustomPrice($customPrice);
+                    $parentItem->setOriginalCustomPrice($customPrice);
+                    $parentItem->save();
+                }
+                $item->setIsSuperMode(1);
+                $item->setCustomPrice($customPrice);
+                $item->setOriginalCustomPrice($customPrice);
+                $item->save();
             }
 
             $quote->getBillingAddress()->addData($data['billing_address']);
@@ -128,8 +146,7 @@ class Orders extends AbstractHelper
             foreach($ordersNew['orders'] as $orderData) {
                 print_r($orderData);
                 $data=$this->prepareOrderData($orderData);
-                print_r($data);
-                //$this->createOrder($data);
+                $this->createOrder($data);
             }
         }
         else {
@@ -152,6 +169,8 @@ class Orders extends AbstractHelper
             'customer_email' => $orderData['billing_address']['billing_email']
         ];
         $data['customer_data'] = $customerData;
+
+        $data['shipping_cost']=$orderData['shipping_costs_vat'];
 
         $data['billing_address'] = [
             'firstname' => $orderData['billing_address']['billing_firstname'],
@@ -182,15 +201,30 @@ class Orders extends AbstractHelper
         ];
 
         foreach($orderData['products'] as $product) {
-            if(isset($product['variation_id'])) {
-                $productIds[]=$this->getConfigurableProductsData($product);
+            if(isset($product['variation_id']) && $product['variation_id']) {
+                $confData=$this->getConfigurableProductsData($product);
+                if($confData) {
+                    $productIds[]=$confData;
+                }
             }
             else {
-                $simpleProduct = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($product['id']);
+                try {
+                    $simpleProduct = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($product['id']);
+                } catch (\Exception $e) {
+                        $this->logger->log(100, $e->getMessage());
+                        $this->logger->log(100, 'wrong product - '.$product['id']);
+                    continue;
+                }
+
+                if(!$simpleProduct->getId()) {
+                    $this->logger->log(100, 'wrong product - '.$product['id']);
+                    continue;
+                }
+
                 $params = array(
                     'product' => $simpleProduct->getId(),
                     'qty' => $product['quantity'],
-                    'price' => $product['unit_price_vat'],
+                    'custom_price' => $product['unit_price_vat'],
                 );
                 $request = new Varien_Object();
                 $request->setData($params);
@@ -210,8 +244,20 @@ class Orders extends AbstractHelper
         $configurableId = 3;
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $simpleProduct = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($simpleProductId);
-        $configurableProduct = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($configurableId);
+
+        try {
+            $simpleProduct = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($simpleProductId);
+            $configurableProduct = $objectManager->get('\Magento\Catalog\Model\ProductRepository')->getById($configurableId);
+        } catch (\Exception $e) {
+            $this->logger->log(100, $e->getMessage());
+            $this->logger->log(100, 'wrong product - '.$product['id']);
+            return null;
+        }
+
+        if(!$configurableProduct->getId()) {
+            $this->logger->log(100, 'wrong product - '.$product['id']);
+            return null;
+        }
 
         $productAttributeOptions = $configurableProduct->getTypeInstance(true)->getConfigurableAttributesAsArray($configurableProduct);
 
@@ -225,7 +271,7 @@ class Orders extends AbstractHelper
             }
         }
         $params = array(
-            'price' => $product['unit_price_vat'],
+            'custom_price' => $product['unit_price_vat'],
             'product' => $configurableProduct->getId(),
             'qty' => $product['quantity'],
             'super_attribute' => $options,
@@ -256,7 +302,5 @@ class Orders extends AbstractHelper
         $version = $productMetadata->getVersion();
         return $version;
     }
-
-
 
 }
