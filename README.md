@@ -1,3 +1,7 @@
+![Cocote](https://avatars2.githubusercontent.com/u/45873841?s=200&v=4)
+
+[Cocote Marketplace](https://fr.cocote.com)
+
 # Magento 2 Module for Cocote.com website.
 
 This module generates feed and communicates with cocote.com website to let it aggregate your products data.
