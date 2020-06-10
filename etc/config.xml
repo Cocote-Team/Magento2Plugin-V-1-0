@@ -9,6 +9,7 @@
                 <map_gtin></map_gtin>
                 <map_description>description</map_description>
                 <map_manufacturer>manufacturer</map_manufacturer>
+                <prefix>COCO</prefix>
             </general>
             <generate>
                 <path>feed</path>

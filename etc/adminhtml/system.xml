@@ -49,6 +49,12 @@
                     <label>Map Brand/Manufacturer attribute</label>
                     <source_model>Cocote\Feed\Model\Config\Source\Attributes</source_model>
                 </field>
+
+                <!--<field id="prefix" type="text" translate="label,comment" sortOrder="7" showInDefault="1" showInWebsite="0" showInStore="0">-->
+                    <!--<label>Order numbers prefix</label>-->
+                    <!--<comment>Will be added for cocote orders only. Leave empty for no change</comment>-->
+                <!--</field>-->
+
             </group>
             <group id="generate" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Feed generating</label>

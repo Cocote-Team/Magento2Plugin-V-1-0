@@ -84,11 +84,10 @@ class Orders extends AbstractHelper
     {
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-
         $store = $this->storeManager->getStore();
-
         $shippingPrice=$data['shipping_cost'];
 
+        $prefix=$this->getConfigValue('cocote/general/prefix');
 
         try {
             $quote = $objectManager->get('\Magento\Quote\Model\QuoteFactory')->create();
@@ -129,6 +128,9 @@ class Orders extends AbstractHelper
             $quote->save();
 
             $quote->getPayment()->importData(['method' => 'cocote']);
+            $quote->reserveOrderId();
+            $quote->setData('reserved_order_id',$prefix.$quote->getData('reserved_order_id'));
+
             $quote->collectTotals()->save();
 
             $order = $objectManager->get('\Magento\Quote\Model\QuoteManagement')->submit($quote);
