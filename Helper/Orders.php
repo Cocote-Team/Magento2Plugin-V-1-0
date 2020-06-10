@@ -228,7 +228,7 @@ class Orders extends AbstractHelper
                     'qty' => $product['quantity'],
                     'custom_price' => $product['unit_price_vat'],
                 );
-                $request = new Varien_Object();
+                $request = new \Magento\Framework\DataObject();
                 $request->setData($params);
                 $productIds[] = ['prod' => $simpleProduct, 'params' => $request];
             }
