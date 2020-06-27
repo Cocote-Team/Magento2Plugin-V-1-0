@@ -148,6 +148,7 @@ class Data extends AbstractHelper
         $collection->addAttributeToSelect('special_price_to');
         $collection->addAttributeToSelect('image');
         $collection->addAttributeToSelect('meta_keyword');
+        $collection->addAttributeToSelect('short_description');
         $collection->addFieldToFilter('status', ['eq' => \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED]);
 
         $inStockOnly=$this->getConfigValue('cocote/generate/in_stock_only');
@@ -233,6 +234,10 @@ class Data extends AbstractHelper
             $currentprod->appendChild($domtree->createElement('identifier', $product->getId()));
             $currentprod->appendChild($domtree->createElement('link', $url));
             $currentprod->appendChild($domtree->createElement('keywords', $product->getData('meta_keyword')));
+
+            $descTag=$domtree->createElement('short_description');
+            $descTag->appendChild($domtree->createCDATASection($product->getData('short_description')));
+            $currentprod->appendChild($descTag);
 
             if($catName=$this->getBestCategory($product->getCategoryIds())) {
                 $currentprod->appendChild($domtree->createElement('category', $catName));
@@ -440,6 +445,15 @@ class Data extends AbstractHelper
             $variation->appendChild($domtree->createElement('variation_threshold_stock',$minQty));
             $variation->appendChild($domtree->createElement('variation_price',$simpleProd->getFinalPrice()));
             $variation->appendChild($domtree->createElement('variation_options',implode(',',$idArray)));
+
+
+            $descTag=$domtree->createElement('variation_short_description');
+            $description=$simpleProd->getResource()->getAttributeRawValue($simpleProd->getId(),'short_description',$this->storeManager->getStore()->getId());
+            if(!is_array($description)) {
+                $descTag->appendChild($domtree->createCDATASection($description));
+            }
+            $variation->appendChild($descTag);
+
 
             $descTag=$domtree->createElement('variation_description');
             $description=$simpleProd->getResource()->getAttributeRawValue($simpleProd->getId(),'description',$this->storeManager->getStore()->getId());
