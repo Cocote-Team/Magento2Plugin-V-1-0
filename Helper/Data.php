@@ -149,6 +149,7 @@ class Data extends AbstractHelper
         $collection->addAttributeToSelect('image');
         $collection->addAttributeToSelect('meta_keyword');
         $collection->addAttributeToSelect('short_description');
+        $collection->addAttributeToSelect('weight');
         $collection->addFieldToFilter('status', ['eq' => \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED]);
 
         $inStockOnly=$this->getConfigValue('cocote/generate/in_stock_only');
@@ -234,6 +235,10 @@ class Data extends AbstractHelper
             $currentprod->appendChild($domtree->createElement('identifier', $product->getId()));
             $currentprod->appendChild($domtree->createElement('link', $url));
             $currentprod->appendChild($domtree->createElement('keywords', $product->getData('meta_keyword')));
+
+            if($product->getData('weight')) {
+                $currentprod->appendChild($domtree->createElement('weight', $product->getData('weight')));
+            }
 
             $descTag=$domtree->createElement('short_description');
             $descTag->appendChild($domtree->createCDATASection($product->getData('short_description')));
@@ -442,6 +447,9 @@ class Data extends AbstractHelper
             $variation->appendChild($domtree->createElement('variation_name',$simpleProd->getName()));
             $variation->appendChild($domtree->createElement('variation_reference',$simpleProd->getSku()));
             $variation->appendChild($domtree->createElement('variation_stock',$qty));
+            if($simpleProd->getWeight()) {
+                $variation->appendChild($domtree->createElement('variation_weight',$simpleProd->getWeight()));
+            }
             $variation->appendChild($domtree->createElement('variation_threshold_stock',$minQty));
             $variation->appendChild($domtree->createElement('variation_price',$simpleProd->getFinalPrice()));
             $variation->appendChild($domtree->createElement('variation_options',implode(',',$idArray)));
