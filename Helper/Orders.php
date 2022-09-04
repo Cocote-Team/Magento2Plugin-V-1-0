@@ -35,8 +35,6 @@ class Orders extends AbstractHelper
         $this->moduleList = $moduleList;
         $this->dir = $dir;
         $this->logger = $logger;
-        $this->logger->pushHandler(new \Monolog\Handler\StreamHandler($this->dir->getRoot() . '/var/log/cocote.log'));
-
         parent::__construct($context);
     }
 
